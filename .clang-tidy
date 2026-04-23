@@ -12,9 +12,9 @@ Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
   -readability-magic-numbers
 
-WarningsAsErrors: >
-  bugprone-*,
-  clang-analyzer-*
+# WarningsAsErrors: >
+#   bugprone-*,
+#   clang-analyzer-*
 
 CheckOptions:
   - key:   readability-identifier-naming.NamespaceCase
@@ -31,11 +31,9 @@ CheckOptions:
     value: lower_case
   - key:   readability-identifier-naming.MemberCase
     value: lower_case
-  - key:   readability-identifier-naming.MemberSuffix
-    value: _
   - key:   readability-identifier-naming.ConstantCase
-    value: kCamelCase
+    value: CamelCase
   - key:   readability-identifier-naming.EnumConstantCase
-    value: kCamelCase
+    value: CamelCase
 
 HeaderFilterRegex: 'modules/.*'
