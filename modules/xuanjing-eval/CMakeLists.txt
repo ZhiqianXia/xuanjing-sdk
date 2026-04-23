@@ -6,3 +6,8 @@ target_include_directories(xuanjing-eval
   PUBLIC
     include
 )
+
+target_link_libraries(xuanjing-eval
+  PUBLIC
+    xuanjing-runtime
+)

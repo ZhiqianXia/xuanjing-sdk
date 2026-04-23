@@ -87,6 +87,26 @@ xuanjing-train      — 数据集注册，训练循环，模型包导出
 
 ---
 
+## 算法对比基准 · Algorithm Benchmark
+
+以下结果由 `xuanjing-benchmark-runner` 在静态合成序列（32×18 → 64×36，8 帧）上自动生成。
+随算法演进，该表通过 CI 持续更新。
+
+| 算法 | 均值 PSNR (dB) ↑ | 均值 CPU 帧时 (ms) ↓ | 说明 |
+|---|---|---|---|
+| `passthrough` | — | < 0.01 | 恒等透传，不执行缩放（基线下界） |
+| `bilinear` | **33.87** | 0.03 | CPU 双线性插值，作为质量基线 |
+| `xuanjing-v0` | _进行中_ | — | 我们的算法，敬请期待 |
+| `fsr1` | _规划中_ | — | AMD FSR 1.0 参考对比 |
+
+> 完整 JSON 报告见 `build/release/samples/benchmark_comparison.json`，
+> 使用 `samples/benchmark_runner/benchmark_runner.cpp` 可在本地复现。
+>
+> **如何添加新算法：** 实现 `xuanjing::upscale::IUpscaler` 接口，
+> 在 `benchmark_runner.cpp` 中注册，重新构建即可自动纳入对比。
+
+---
+
 ## 快速开始
 
 **依赖**：CMake ≥ 3.20，Ninja，C++17 编译器，clang-format
