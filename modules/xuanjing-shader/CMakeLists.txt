@@ -6,3 +6,8 @@ target_include_directories(xuanjing-shader
   PUBLIC
     include
 )
+
+target_link_libraries(xuanjing-shader
+  PUBLIC
+    xuanjing-runtime
+)

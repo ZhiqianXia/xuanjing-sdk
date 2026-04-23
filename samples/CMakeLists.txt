@@ -14,7 +14,10 @@ add_executable(xuanjing-benchmark-runner
 target_link_libraries(xuanjing-benchmark-runner
 	PRIVATE
 		xuanjing-runtime
+		xuanjing-temporal
 		xuanjing-upscale
 		xuanjing-genframe
+		xuanjing-shader
+		xuanjing-tensor
 		xuanjing-eval
 )

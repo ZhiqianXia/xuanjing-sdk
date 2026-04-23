@@ -1,7 +1,27 @@
 #pragma once
 
-namespace xuanjing::shader {
+#include "xuanjing-runtime/runtime_api.h"
 
-bool BootstrapShaderPipeline();
+namespace xuanjing {
+namespace shader {
 
-}  // namespace xuanjing::shader
+struct ShaderComposeConfig {
+	bool enableUiComposite = true;
+};
+
+class IShaderComposer {
+ public:
+	virtual ~IShaderComposer() = default;
+
+	virtual bool Prepare(std::uint32_t width, std::uint32_t height,
+											 const ShaderComposeConfig& config) = 0;
+	virtual bool Compose(const runtime::FrameInput& input,
+											 runtime::FrameOutput& output) = 0;
+	virtual const char* Name() const = 0;
+};
+
+IShaderComposer* CreatePassthroughShaderComposer();
+IShaderComposer* CreateSimpleUiShaderComposer();
+
+}  // namespace shader
+}  // namespace xuanjing

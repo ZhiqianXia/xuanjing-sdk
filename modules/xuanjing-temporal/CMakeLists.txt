@@ -6,3 +6,8 @@ target_include_directories(xuanjing-temporal
   PUBLIC
     include
 )
+
+target_link_libraries(xuanjing-temporal
+  PUBLIC
+    xuanjing-runtime
+)

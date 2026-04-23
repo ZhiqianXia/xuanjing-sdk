@@ -11,8 +11,11 @@
 //   <output-dir>/benchmark_comparison.json
 
 #include "xuanjing-runtime/runtime_api.h"
+#include "xuanjing-temporal/temporal_api.h"
 #include "xuanjing-upscale/upscale_api.h"
 #include "xuanjing-genframe/genframe_api.h"
+#include "xuanjing-shader/shader_api.h"
+#include "xuanjing-tensor/tensor_api.h"
 #include "xuanjing-eval/eval_api.h"
 
 #include <chrono>
@@ -83,7 +86,10 @@ bool WritePpm(const std::string& path, const runtime::ImageView& img) {
 
 // Run an upscaler for kFrames frames, return its BenchmarkReport.
 eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
+                                    temporal::ITemporalProcessor* temporalProcessor,
                                     genframe::IFrameGenerator* frameGenerator,
+                                    shader::IShaderComposer* shaderComposer,
+                                    tensor::IInferenceHook* inferenceHook,
                                     const runtime::FrameInput& inputTemplate,
                                     const runtime::ImageView& groundTruth,
                                     std::uint32_t kFrames,
@@ -105,7 +111,30 @@ eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
       input.prevHistory = prevHistoryView;
     }
 
+    if (temporalProcessor != nullptr) {
+      temporal::TemporalResult temporalResult{};
+      if (temporalProcessor->Process(input, temporalResult) &&
+          temporalResult.hasReprojectedHistory) {
+        input.prevHistory = temporalResult.reprojectedHistory;
+        input.hasPrevHistory = true;
+      }
+    }
+
     runtime::FrameOutput output{};
+
+    // Tensor inference hook (optional): runs before upscale, represents
+    // any neural-network dispatch that future SR algorithms depend on.
+    double tensorLatencyMs = 0.0;
+    if (inferenceHook != nullptr) {
+      tensor::InferenceRequest ireq{};
+      ireq.input = input.lowResColor.data;
+      ireq.inputBytes = input.lowResColor.rowStrideBytes * input.lowResColor.height;
+      ireq.backend = tensor::Backend::kCPU;
+      tensor::InferenceResult ires{};
+      if (inferenceHook->Run(ireq, ires)) {
+        tensorLatencyMs = ires.latencyMs;
+      }
+    }
 
     const auto cpuStart = std::chrono::steady_clock::now();
     const bool ok = upscaler.Upscale(input, output);
@@ -126,6 +155,14 @@ eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
       }
     }
 
+    if (shaderComposer != nullptr) {
+      const bool composeOk = shaderComposer->Compose(input, output);
+      if (!composeOk) {
+        std::fprintf(stderr, "[%s] Shader compose failed at frame %u\n",
+                     shaderComposer->Name(), i);
+      }
+    }
+
     const auto cpuEnd = std::chrono::steady_clock::now();
 
     const double cpuMs =
@@ -136,6 +173,7 @@ eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
     fm.frameIndex = i;
     fm.psnr = eval::ComputePsnr(groundTruth, output.highResColor);
     fm.cpuTimeMs = cpuMs;
+    fm.gpuTimeMs = tensorLatencyMs;
 
     eval::AccumulateMetrics(report, fm);
 
@@ -197,6 +235,15 @@ int main(int argc, char* argv[]) {
 
   auto groundTruth = ViewOf(groundTruthBuf, kDstW, kDstH);
 
+  temporal::TemporalConfig temporalConfig{};
+  temporalConfig.enableDisocclusionReject = true;
+  std::unique_ptr<temporal::ITemporalProcessor> temporalProcessor(
+      temporal::CreateSimpleTemporalProcessor());
+  if (!temporalProcessor->Prepare(kDstW, kDstH, temporalConfig)) {
+    std::fprintf(stderr, "[%s] Prepare() failed\n", temporalProcessor->Name());
+    return 1;
+  }
+
   genframe::FrameGenConfig frameGenConfig{};
   frameGenConfig.enableConfidenceGate = true;
   frameGenConfig.blendAlpha = 0.5F;
@@ -204,6 +251,22 @@ int main(int argc, char* argv[]) {
       genframe::CreateSimpleBlendFrameGenerator());
   if (!frameGenerator->Prepare(kDstW, kDstH, frameGenConfig)) {
     std::fprintf(stderr, "[%s] Prepare() failed\n", frameGenerator->Name());
+    return 1;
+  }
+
+  shader::ShaderComposeConfig shaderConfig{};
+  shaderConfig.enableUiComposite = true;
+  std::unique_ptr<shader::IShaderComposer> shaderComposer(
+      shader::CreateSimpleUiShaderComposer());
+  if (!shaderComposer->Prepare(kDstW, kDstH, shaderConfig)) {
+    std::fprintf(stderr, "[%s] Prepare() failed\n", shaderComposer->Name());
+    return 1;
+  }
+
+  std::unique_ptr<tensor::IInferenceHook> inferenceHook(
+      tensor::CreateCpuReferenceInferenceHook());
+  if (!inferenceHook->Initialize(tensor::Backend::kCPU)) {
+    std::fprintf(stderr, "[%s] Initialize() failed\n", inferenceHook->Name());
     return 1;
   }
 
@@ -225,15 +288,18 @@ int main(int argc, char* argv[]) {
     std::printf("Running algorithm: %s (%u frames)\n", algo->Name(), kFrames);
     PipelineStats stats{};
     eval::BenchmarkReport rep =
-      RunAlgorithm(*algo, frameGenerator.get(), input, groundTruth, kFrames,
-             outDir, stats);
+      RunAlgorithm(*algo, temporalProcessor.get(), frameGenerator.get(),
+                   shaderComposer.get(), inferenceHook.get(),
+                   input, groundTruth, kFrames, outDir, stats);
 
     const std::string jsonPath =
         outDir + "/benchmark_" + rep.algorithmName + ".json";
     eval::WriteReportJson(rep, jsonPath);
     std::printf("  -> %s\n", jsonPath.c_str());
     std::printf("  framegen(%s): %u/%u frames\n", frameGenerator->Name(),
-          stats.generatedFrames, kFrames);
+                stats.generatedFrames, kFrames);
+    std::printf("  tensor(%s): mean gpu time %.3f ms\n", inferenceHook->Name(),
+                rep.meanGpuTimeMs);
 
     reports.push_back(rep);
   }
