@@ -1,0 +1,46 @@
+# Build outputs
+build/
+build-*/
+out/
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Coverage artifacts
+*.gcno
+*.gcda
+*.lcov
+coverage-report/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python (training scripts)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Model weights (tracked separately via DVC/LFS)
+*.pth
+*.onnx
+*.engine
+*.trt
+*.bin
+
+# Logs
+*.log
+runs/
+wandb/
