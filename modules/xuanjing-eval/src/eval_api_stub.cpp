@@ -2,8 +2,6 @@
 
 namespace xuanjing::eval {
 
-double ComputeQualityScore() {
-  return 0.0;
-}
+double ComputeQualityScore() { return 0.0; }
 
 }  // namespace xuanjing::eval

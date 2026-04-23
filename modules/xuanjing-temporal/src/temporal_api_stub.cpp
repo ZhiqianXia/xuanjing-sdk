@@ -2,8 +2,6 @@
 
 namespace xuanjing::temporal {
 
-bool ReprojectHistory() {
-  return true;
-}
+bool ReprojectHistory() { return true; }
 
 }  // namespace xuanjing::temporal

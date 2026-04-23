@@ -2,8 +2,6 @@
 
 namespace xuanjing::shader {
 
-bool BootstrapShaderPipeline() {
-  return true;
-}
+bool BootstrapShaderPipeline() { return true; }
 
 }  // namespace xuanjing::shader

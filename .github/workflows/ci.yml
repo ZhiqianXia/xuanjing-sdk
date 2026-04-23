@@ -38,7 +38,7 @@ jobs:
       - name: Cache CMake build
         uses: actions/cache@v4
         with:
-          path: build-${{ matrix.preset }}
+          path: build/${{ matrix.preset }}
           key: ${{ runner.os }}-cmake-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
           restore-keys: |
             ${{ runner.os }}-cmake-${{ matrix.preset }}-
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: build-coverage/coverage-report/
+          path: build/coverage/coverage-report/
           retention-days: 30
 
       - name: Comment Coverage on PR
@@ -96,7 +96,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const coverage_file = './build-coverage/coverage-report/index.html';
+            const coverage_file = './build/coverage/coverage-report/index.html';
             if (fs.existsSync(coverage_file)) {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,

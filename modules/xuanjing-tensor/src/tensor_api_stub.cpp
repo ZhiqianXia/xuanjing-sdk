@@ -2,8 +2,6 @@
 
 namespace xuanjing::tensor {
 
-bool RunInference(Backend backend) {
-  return backend != Backend::kCPU;
-}
+bool RunInference(Backend backend) { return backend != Backend::kCPU; }
 
 }  // namespace xuanjing::tensor

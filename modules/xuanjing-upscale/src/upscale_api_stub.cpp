@@ -2,8 +2,6 @@
 
 namespace xuanjing::upscale {
 
-bool RunUpscale(QualityPreset) {
-  return true;
-}
+bool RunUpscale(QualityPreset) { return true; }
 
 }  // namespace xuanjing::upscale
