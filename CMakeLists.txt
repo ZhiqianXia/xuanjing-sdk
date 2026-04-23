@@ -22,6 +22,7 @@ add_subdirectory(modules/xuanjing-shader)
 add_subdirectory(modules/xuanjing-eval)
 add_subdirectory(modules/xuanjing-train)
 add_subdirectory(modules/xuanjing-platform)
+add_subdirectory(modules/xuanjing-compiler)
 
 if(XUANJING_BUILD_SAMPLES)
   add_subdirectory(samples)

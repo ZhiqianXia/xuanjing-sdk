@@ -15,5 +15,6 @@ target_link_libraries(xuanjing-benchmark-runner
 	PRIVATE
 		xuanjing-runtime
 		xuanjing-upscale
+		xuanjing-genframe
 		xuanjing-eval
 )

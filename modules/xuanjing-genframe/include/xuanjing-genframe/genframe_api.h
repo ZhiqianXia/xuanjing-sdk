@@ -1,11 +1,28 @@
 #pragma once
 
-namespace xuanjing::genframe {
+#include "xuanjing-runtime/runtime_api.h"
+
+namespace xuanjing {
+namespace genframe {
 
 struct FrameGenConfig {
-  bool enable_confidence_gate = true;
+  bool enableConfidenceGate = true;
+  float blendAlpha = 0.5F;
 };
 
-bool GenerateFrame(const FrameGenConfig& config);
+class IFrameGenerator {
+ public:
+  virtual ~IFrameGenerator() = default;
 
-}  // namespace xuanjing::genframe
+  virtual bool Prepare(std::uint32_t width, std::uint32_t height,
+                       const FrameGenConfig& config) = 0;
+  virtual bool Generate(const runtime::FrameInput& input,
+                        runtime::FrameOutput& output) = 0;
+  virtual const char* Name() const = 0;
+};
+
+IFrameGenerator* CreateDisabledFrameGenerator();
+IFrameGenerator* CreateSimpleBlendFrameGenerator();
+
+}  // namespace genframe
+}  // namespace xuanjing

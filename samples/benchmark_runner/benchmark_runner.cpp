@@ -12,6 +12,7 @@
 
 #include "xuanjing-runtime/runtime_api.h"
 #include "xuanjing-upscale/upscale_api.h"
+#include "xuanjing-genframe/genframe_api.h"
 #include "xuanjing-eval/eval_api.h"
 
 #include <chrono>
@@ -29,6 +30,10 @@
 namespace {
 
 using namespace xuanjing;
+
+struct PipelineStats {
+  std::uint32_t generatedFrames = 0;
+};
 
 // Build a synthetic RGBA8 gradient image of size w x h.
 std::vector<std::uint8_t> MakeGradientRgba8(std::uint32_t w,
@@ -78,27 +83,50 @@ bool WritePpm(const std::string& path, const runtime::ImageView& img) {
 
 // Run an upscaler for kFrames frames, return its BenchmarkReport.
 eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
+                                    genframe::IFrameGenerator* frameGenerator,
                                     const runtime::FrameInput& inputTemplate,
                                     const runtime::ImageView& groundTruth,
                                     std::uint32_t kFrames,
-                                    const std::string& outDir) {
+                                    const std::string& outDir,
+                                    PipelineStats& stats) {
   eval::BenchmarkReport report{};
+
+  std::vector<std::uint8_t> prevHistoryBuffer(
+      static_cast<std::size_t>(groundTruth.width) * groundTruth.height * 4U, 0U);
+  runtime::ImageView prevHistoryView = ViewOf(prevHistoryBuffer,
+                                              groundTruth.width,
+                                              groundTruth.height);
 
   for (std::uint32_t i = 0; i < kFrames; ++i) {
     runtime::FrameInput input = inputTemplate;
     input.metadata.frameIndex = i;
+    input.hasPrevHistory = (i > 0);
+    if (input.hasPrevHistory) {
+      input.prevHistory = prevHistoryView;
+    }
 
     runtime::FrameOutput output{};
 
     const auto cpuStart = std::chrono::steady_clock::now();
     const bool ok = upscaler.Upscale(input, output);
-    const auto cpuEnd = std::chrono::steady_clock::now();
 
     if (!ok) {
       std::fprintf(stderr, "[%s] Upscale() failed at frame %u\n",
                    upscaler.Name(), i);
       continue;
     }
+
+    if (frameGenerator != nullptr) {
+      const bool genOk = frameGenerator->Generate(input, output);
+      if (!genOk) {
+        std::fprintf(stderr, "[%s] Frame generation failed at frame %u\n",
+                     frameGenerator->Name(), i);
+      } else if (output.hasGeneratedFrame) {
+        ++stats.generatedFrames;
+      }
+    }
+
+    const auto cpuEnd = std::chrono::steady_clock::now();
 
     const double cpuMs =
         std::chrono::duration<double, std::milli>(cpuEnd - cpuStart).count();
@@ -116,6 +144,18 @@ eval::BenchmarkReport RunAlgorithm(upscale::IUpscaler& upscaler,
       const std::string ppmPath =
           outDir + "/benchmark_" + upscaler.Name() + "_frame0.ppm";
       WritePpm(ppmPath, output.highResColor);
+    }
+
+    if (output.highResColor.data != nullptr &&
+        output.highResColor.width == prevHistoryView.width &&
+        output.highResColor.height == prevHistoryView.height) {
+      for (std::uint32_t y = 0; y < prevHistoryView.height; ++y) {
+        const auto* src = static_cast<const std::uint8_t*>(output.highResColor.data) +
+                          y * output.highResColor.rowStrideBytes;
+        auto* dst = prevHistoryBuffer.data() +
+                    static_cast<std::size_t>(y) * prevHistoryView.rowStrideBytes;
+        std::memcpy(dst, src, prevHistoryView.rowStrideBytes);
+      }
     }
   }
 
@@ -157,6 +197,16 @@ int main(int argc, char* argv[]) {
 
   auto groundTruth = ViewOf(groundTruthBuf, kDstW, kDstH);
 
+  genframe::FrameGenConfig frameGenConfig{};
+  frameGenConfig.enableConfidenceGate = true;
+  frameGenConfig.blendAlpha = 0.5F;
+  std::unique_ptr<genframe::IFrameGenerator> frameGenerator(
+      genframe::CreateSimpleBlendFrameGenerator());
+  if (!frameGenerator->Prepare(kDstW, kDstH, frameGenConfig)) {
+    std::fprintf(stderr, "[%s] Prepare() failed\n", frameGenerator->Name());
+    return 1;
+  }
+
   // ---- Algorithms to benchmark -------------------------------------------
   std::vector<std::unique_ptr<upscale::IUpscaler>> algorithms;
   algorithms.emplace_back(upscale::CreatePassthroughUpscaler());
@@ -173,13 +223,17 @@ int main(int argc, char* argv[]) {
     }
 
     std::printf("Running algorithm: %s (%u frames)\n", algo->Name(), kFrames);
+    PipelineStats stats{};
     eval::BenchmarkReport rep =
-        RunAlgorithm(*algo, input, groundTruth, kFrames, outDir);
+      RunAlgorithm(*algo, frameGenerator.get(), input, groundTruth, kFrames,
+             outDir, stats);
 
     const std::string jsonPath =
         outDir + "/benchmark_" + rep.algorithmName + ".json";
     eval::WriteReportJson(rep, jsonPath);
     std::printf("  -> %s\n", jsonPath.c_str());
+    std::printf("  framegen(%s): %u/%u frames\n", frameGenerator->Name(),
+          stats.generatedFrames, kFrames);
 
     reports.push_back(rep);
   }

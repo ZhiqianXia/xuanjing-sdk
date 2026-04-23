@@ -6,3 +6,8 @@ target_include_directories(xuanjing-genframe
   PUBLIC
     include
 )
+
+target_link_libraries(xuanjing-genframe
+  PUBLIC
+    xuanjing-runtime
+)
