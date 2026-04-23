@@ -1,8 +1,8 @@
 #pragma once
 
-#include "xuanjing-runtime/runtime_api.h"
-
 #include <string>
+
+#include "xuanjing-runtime/runtime_api.h"
 
 namespace xuanjing {
 namespace upscale {
@@ -20,7 +20,7 @@ enum class QualityPreset {
 // Each upscale algorithm implements this interface.
 // The same pipeline can compare algorithms by swapping the pointer.
 class IUpscaler {
-public:
+ public:
   virtual ~IUpscaler() = default;
 
   // One-time preparation. Called once after initialization.
@@ -37,8 +37,8 @@ public:
 };
 
 // Factory helpers — each algorithm registers here.
-IUpscaler* CreateBilinearUpscaler();   // CPU-reference, always available
-IUpscaler* CreatePassthroughUpscaler(); // identity (input = output), for baseline
+IUpscaler* CreateBilinearUpscaler();     // CPU-reference, always available
+IUpscaler* CreatePassthroughUpscaler();  // identity (input = output), for baseline
 
 }  // namespace upscale
 }  // namespace xuanjing

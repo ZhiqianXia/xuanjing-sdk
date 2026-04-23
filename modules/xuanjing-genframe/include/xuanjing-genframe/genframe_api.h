@@ -14,10 +14,8 @@ class IFrameGenerator {
  public:
   virtual ~IFrameGenerator() = default;
 
-  virtual bool Prepare(std::uint32_t width, std::uint32_t height,
-                       const FrameGenConfig& config) = 0;
-  virtual bool Generate(const runtime::FrameInput& input,
-                        runtime::FrameOutput& output) = 0;
+  virtual bool Prepare(std::uint32_t width, std::uint32_t height, const FrameGenConfig& config) = 0;
+  virtual bool Generate(const runtime::FrameInput& input, runtime::FrameOutput& output) = 0;
   virtual const char* Name() const = 0;
 };
 

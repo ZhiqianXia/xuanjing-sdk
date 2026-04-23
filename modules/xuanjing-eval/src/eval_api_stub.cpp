@@ -1,10 +1,10 @@
-#include "xuanjing-eval/eval_api.h"
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <limits>
+
+#include "xuanjing-eval/eval_api.h"
 
 namespace xuanjing {
 namespace eval {
@@ -27,16 +27,13 @@ double ComputePsnr(const ImageView& reference, const ImageView& result) {
 
   for (std::uint32_t y = 0; y < h; ++y) {
     const auto* ref =
-        static_cast<const std::uint8_t*>(reference.data) +
-        y * reference.rowStrideBytes;
-    const auto* res =
-        static_cast<const std::uint8_t*>(result.data) +
-        y * result.rowStrideBytes;
+        static_cast<const std::uint8_t*>(reference.data) + y * reference.rowStrideBytes;
+    const auto* res = static_cast<const std::uint8_t*>(result.data) + y * result.rowStrideBytes;
     // Only accumulate RGB channels (skip alpha)
     for (std::uint32_t x = 0; x < w; ++x) {
       for (int c = 0; c < 3; ++c) {
-        const double diff = static_cast<double>(ref[x * 4 + c]) -
-                            static_cast<double>(res[x * 4 + c]);
+        const double diff =
+            static_cast<double>(ref[x * 4 + c]) - static_cast<double>(res[x * 4 + c]);
         mse += diff * diff;
         ++count;
       }
@@ -97,20 +94,17 @@ bool WriteReportJson(const BenchmarkReport& r, const std::string& path) {
 // ---------------------------------------------------------------------------
 // Comparison print
 // ---------------------------------------------------------------------------
-void PrintComparison(const BenchmarkReport& baseline,
-                     const BenchmarkReport& candidate) {
+void PrintComparison(const BenchmarkReport& baseline, const BenchmarkReport& candidate) {
   const double psnrDelta = candidate.meanPsnr - baseline.meanPsnr;
   const double speedup =
-      (baseline.meanCpuTimeMs > 0.0)
-          ? baseline.meanCpuTimeMs / candidate.meanCpuTimeMs
-          : 0.0;
+      (baseline.meanCpuTimeMs > 0.0) ? baseline.meanCpuTimeMs / candidate.meanCpuTimeMs : 0.0;
 
   std::printf("%-20s  PSNR %6.2f dB  cpu %6.2f ms\n",
-              baseline.algorithmName ? baseline.algorithmName : "baseline",
-              baseline.meanPsnr, baseline.meanCpuTimeMs);
+              baseline.algorithmName ? baseline.algorithmName : "baseline", baseline.meanPsnr,
+              baseline.meanCpuTimeMs);
   std::printf("%-20s  PSNR %6.2f dB  cpu %6.2f ms\n",
-              candidate.algorithmName ? candidate.algorithmName : "candidate",
-              candidate.meanPsnr, candidate.meanCpuTimeMs);
+              candidate.algorithmName ? candidate.algorithmName : "candidate", candidate.meanPsnr,
+              candidate.meanCpuTimeMs);
   std::printf("delta:  PSNR %+.2f dB  speedup %.2fx\n", psnrDelta, speedup);
 }
 

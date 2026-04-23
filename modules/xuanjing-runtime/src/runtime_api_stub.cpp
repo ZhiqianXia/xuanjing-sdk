@@ -6,8 +6,8 @@ namespace runtime {
 namespace {
 
 bool IsValidImage(const ImageView& image) {
-  return image.data != nullptr && image.width > 0 && image.height > 0 &&
-         image.rowStrideBytes > 0 && image.format != PixelFormat::kUnknown;
+  return image.data != nullptr && image.width > 0 && image.height > 0 && image.rowStrideBytes > 0
+         && image.format != PixelFormat::kUnknown;
 }
 
 }  // namespace
@@ -18,20 +18,20 @@ bool Initialize(RuntimeContext& ctx) {
 }
 
 bool ValidateFrameInput(const FrameInput& input) {
-  if (!IsValidImage(input.lowResColor) || !IsValidImage(input.motionVectors) ||
-      !IsValidImage(input.depth)) {
+  if (!IsValidImage(input.lowResColor) || !IsValidImage(input.motionVectors)
+      || !IsValidImage(input.depth)) {
     return false;
   }
 
-  if (input.lowResColor.width != input.motionVectors.width ||
-      input.lowResColor.height != input.motionVectors.height ||
-      input.lowResColor.width != input.depth.width ||
-      input.lowResColor.height != input.depth.height) {
+  if (input.lowResColor.width != input.motionVectors.width
+      || input.lowResColor.height != input.motionVectors.height
+      || input.lowResColor.width != input.depth.width
+      || input.lowResColor.height != input.depth.height) {
     return false;
   }
 
-  if (input.metadata.outputWidth == 0 || input.metadata.outputHeight == 0 ||
-      input.metadata.exposure <= 0.0F) {
+  if (input.metadata.outputWidth == 0 || input.metadata.outputHeight == 0
+      || input.metadata.exposure <= 0.0F) {
     return false;
   }
 

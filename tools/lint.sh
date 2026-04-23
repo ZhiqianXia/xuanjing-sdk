@@ -5,9 +5,13 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build/dev"
 
+echo "=== auto format (clang-format -i) ==="
+find "${REPO_ROOT}/modules" \( -name "*.h" -o -name "*.cpp" \) -print0 | \
+  xargs -0 clang-format -i
+
 echo "=== clang-format check ==="
-find "${REPO_ROOT}/modules" -name "*.h" -o -name "*.cpp" | \
-  xargs clang-format --dry-run --Werror
+find "${REPO_ROOT}/modules" \( -name "*.h" -o -name "*.cpp" \) -print0 | \
+  xargs -0 clang-format --dry-run --Werror
 
 echo "=== clang-tidy ==="
 if command -v clang-tidy &> /dev/null; then
@@ -15,8 +19,8 @@ if command -v clang-tidy &> /dev/null; then
     echo "No compile_commands.json found. Configure first: cmake --preset dev"
     exit 1
   fi
-  find "${REPO_ROOT}/modules" -name "*.cpp" | \
-    xargs clang-tidy -p "${BUILD_DIR}"
+  find "${REPO_ROOT}/modules" -name "*.cpp" -print0 | \
+    xargs -0 clang-tidy -p "${BUILD_DIR}"
 else
   echo "Warning: clang-tidy not found. Skipping static analysis checks."
   echo "To enable: sudo apt-get install clang-tools"
