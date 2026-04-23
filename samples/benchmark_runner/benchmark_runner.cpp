@@ -16,12 +16,14 @@
 #include "xuanjing-genframe/genframe_api.h"
 #include "xuanjing-shader/shader_api.h"
 #include "xuanjing-tensor/tensor_api.h"
+#include "xuanjing-model/model_api.h"
 #include "xuanjing-eval/eval_api.h"
 
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -37,6 +39,20 @@ using namespace xuanjing;
 struct PipelineStats {
   std::uint32_t generatedFrames = 0;
 };
+
+std::string ResolveDefaultModelPath() {
+  const char* candidates[] = {
+      "models/realesrgan_64x64.onnx",
+      "../../models/realesrgan_64x64.onnx",
+      "../../../models/realesrgan_64x64.onnx",
+  };
+  for (const char* path : candidates) {
+    if (std::filesystem::exists(path)) {
+      return path;
+    }
+  }
+  return candidates[0];
+}
 
 // Build a synthetic RGBA8 gradient image of size w x h.
 std::vector<std::uint8_t> MakeGradientRgba8(std::uint32_t w,
@@ -265,9 +281,35 @@ int main(int argc, char* argv[]) {
 
   std::unique_ptr<tensor::IInferenceHook> inferenceHook(
       tensor::CreateCpuReferenceInferenceHook());
-  if (!inferenceHook->Initialize(tensor::Backend::kCPU)) {
+
+  // Optional ONNX model registration. If the file is absent, pipeline keeps
+  // running with legacy tensor stub behavior.
+  constexpr const char* kDefaultModelId = "realesrgan-x4";
+  model::ModelPackage package{};
+  package.modelId = kDefaultModelId;
+  const std::string modelPath = ResolveDefaultModelPath();
+  package.modelPath = modelPath.c_str();
+  package.format = model::ModelFormat::kONNX;
+
+  tensor::SessionConfig sessionConfig{};
+  sessionConfig.backend = tensor::Backend::kCPU;
+
+  model::ModelStatus modelStatus{};
+  if (model::RegisterModelPackage(package, &modelStatus)) {
+    sessionConfig.modelId = kDefaultModelId;
+    std::printf("model(%s): registered %s\n", kDefaultModelId, package.modelPath);
+  } else {
+    std::printf("model(%s): skip (%s)\n", kDefaultModelId,
+                modelStatus.message != nullptr ? modelStatus.message : "unknown");
+  }
+
+  if (!inferenceHook->Initialize(sessionConfig)) {
     std::fprintf(stderr, "[%s] Initialize() failed\n", inferenceHook->Name());
     return 1;
+  }
+  if (inferenceHook->ActiveModelId() != nullptr) {
+    std::printf("tensor(%s): active model %s\n",
+                inferenceHook->Name(), inferenceHook->ActiveModelId());
   }
 
   // ---- Algorithms to benchmark -------------------------------------------

@@ -17,6 +17,11 @@ struct InferenceRequest {
   Backend backend = Backend::kCPU;
 };
 
+struct SessionConfig {
+  Backend backend = Backend::kCPU;
+  const char* modelId = nullptr;
+};
+
 struct InferenceResult {
   bool success = false;
   double latencyMs = 0.0;
@@ -27,8 +32,9 @@ class IInferenceHook {
  public:
   virtual ~IInferenceHook() = default;
 
-  virtual bool Initialize(Backend backend) = 0;
+  virtual bool Initialize(const SessionConfig& config) = 0;
   virtual bool Run(const InferenceRequest& request, InferenceResult& result) = 0;
+  virtual const char* ActiveModelId() const = 0;
   virtual const char* Name() const = 0;
 };
 
