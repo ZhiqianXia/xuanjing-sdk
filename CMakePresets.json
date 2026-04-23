@@ -26,7 +26,8 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "XUANJING_BUILD_SAMPLES": "ON"
+        "XUANJING_BUILD_SAMPLES": "ON",
+        "XUANJING_BUILD_TESTS": "ON"
       }
     },
     {
@@ -80,6 +81,13 @@
     {
       "name": "asan",
       "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
       "output": {
         "outputOnFailure": true
       }
