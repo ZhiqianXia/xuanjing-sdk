@@ -11,7 +11,7 @@ This repository is organized as a module-based monorepo.
 - modules/xuanjing-tensor: NPU/GPU inference kernels and graph runtime.
 - modules/xuanjing-shader: Rasterization and post-processing shader stack.
 - modules/xuanjing-eval: Objective and subjective quality/performance evaluation.
-- modules/xuanjing-train: Data, training, distillation, model packaging.
+- modules/xuanjing-model: Data, training, distillation, model packaging.
 - modules/xuanjing-platform: Driver/platform adaptation and capability abstraction.
 
 ## Shared Directories

@@ -1,4 +1,4 @@
-# xuanjing-train
+# xuanjing-model
 
 Data and model training workflow module.
 

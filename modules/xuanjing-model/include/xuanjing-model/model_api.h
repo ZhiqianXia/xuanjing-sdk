@@ -1,7 +1,7 @@
 #pragma once
 
-namespace xuanjing::train {
+namespace xuanjing::model {
 
 bool RegisterDataset(const char* dataset_name);
 
-}  // namespace xuanjing::train
+}  // namespace xuanjing::model

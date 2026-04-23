@@ -80,7 +80,7 @@ xuanjing-shader     — shader pipeline，色彩空间，UI 合成
 xuanjing-compiler   — ComputeGraph IR，Pass Manager，SPIR-V codegen
 xuanjing-tensor     — 后端选择，JIT 缓存，kernel dispatch
 xuanjing-eval       — PSNR/SSIM/LPIPS，帧时延，CI 质量报告
-xuanjing-train      — 数据集注册，训练循环，模型包导出
+xuanjing-model      — 数据集注册，训练循环，模型包导出
 ```
 
 完整架构与数据流见 [docs/architecture/sdk_architecture.md](docs/architecture/sdk_architecture.md)。

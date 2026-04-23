@@ -13,7 +13,7 @@
 | **xuanjing-compiler** | ComputeGraph（算子图）、TargetISA（kSPIRV/kDXIL/…） | CompiledKernel（SPIR-V words 或 DXIL bytes） |
 | **xuanjing-tensor** | CompiledKernel、模型权重包、输入 tensor | 推理结果 tensor |
 | **xuanjing-eval** | 输出帧 + ground-truth 参考帧 | PSNR、SSIM、LPIPS、帧时延、flicker rate；CI 质量报告 |
-| **xuanjing-train** | 原始渲染序列 + GT 高分辨率序列；dataset 注册 | 训练模型权重包（含版本 + checksum + backend compat） |
+| **xuanjing-model** | 原始渲染序列 + GT 高分辨率序列；dataset 注册 | 训练模型权重包（含版本 + checksum + backend compat） |
 
 > **UI 合成约束**：HUD/UI 层（无 MV、无 Depth）必须在 SDK 处理前与 3D 场景分离，在 xuanjing-shader 的最后步骤才合入。否则会产生 ghosting 和 trailing 伪影。
 
@@ -87,7 +87,7 @@ temporal      upscale           shader       eval
 | **Execution** | xuanjing-tensor | 后端选择（GPU/NPU/CPU）；JIT 缓存；kernel dispatch |
 | **Platform** | xuanjing-platform | 设备能力探测；Capability Profile；driver interop bootstrap |
 | **Evaluation** | xuanjing-eval | PSNR/SSIM/LPIPS；帧时延；CI 质量报告 |
-| **Training** | xuanjing-train | 数据集注册；训练循环；模型包导出（版本+checksum） |
+| **Training** | xuanjing-model | 数据集注册；训练循环；模型包导出（版本+checksum） |
 
 ---
 
@@ -207,7 +207,7 @@ Dataset
   原始渲染序列 + GT 高分辨率序列
   │
   ▼
-xuanjing-train
+xuanjing-model
   IN  dataset 注册 · 原始渲染序列 · GT 高分辨率序列
   IN  质量反馈 (来自 xuanjing-eval，可选)
   OUT 模型权重包
@@ -232,7 +232,7 @@ xuanjing-upscale    ← temporal, (soft) tensor/compiler
 xuanjing-shader     ← platform
 xuanjing-genframe   ← temporal, tensor, shader
 xuanjing-eval       ← 无硬依赖（挂载 runtime 输出）
-xuanjing-train      ← (soft) tensor, eval
+xuanjing-model      ← (soft) tensor, eval
 xuanjing-runtime    ← platform, temporal, upscale, shader, (soft) eval
 ```
 

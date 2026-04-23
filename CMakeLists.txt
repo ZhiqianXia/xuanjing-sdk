@@ -20,7 +20,7 @@ add_subdirectory(modules/xuanjing-temporal)
 add_subdirectory(modules/xuanjing-tensor)
 add_subdirectory(modules/xuanjing-shader)
 add_subdirectory(modules/xuanjing-eval)
-add_subdirectory(modules/xuanjing-train)
+add_subdirectory(modules/xuanjing-model)
 add_subdirectory(modules/xuanjing-platform)
 add_subdirectory(modules/xuanjing-compiler)
 

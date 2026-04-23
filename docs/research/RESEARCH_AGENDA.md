@@ -77,7 +77,7 @@ Claimed Novelty:
 |---|---|---|---|
 | P1: Temporally Stable SR | SIGGRAPH 2027 | xuanjing-temporal, xuanjing-upscale, xuanjing-eval | Q4 2026 |
 | P2: Low-Latency Frame Generation | CVPR 2027 | xuanjing-genframe, xuanjing-temporal | Q3 2026 |
-| P3: Efficient NPU SR Inference | IEEE TIP 2027 | xuanjing-tensor, xuanjing-train | Q1 2027 |
+| P3: Efficient NPU SR Inference | IEEE TIP 2027 | xuanjing-tensor, xuanjing-model | Q1 2027 |
 
 ---
 

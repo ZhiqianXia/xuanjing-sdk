@@ -87,7 +87,7 @@ Top-level dependency graph
 - xuanjing-tensor -> xuanjing-platform
 - xuanjing-shader -> xuanjing-platform
 - xuanjing-eval -> xuanjing-runtime output path
-- xuanjing-train -> xuanjing-tensor (model format/graph alignment), xuanjing-eval (metric alignment)
+- xuanjing-model -> xuanjing-tensor (model format/graph alignment), xuanjing-eval (metric alignment)
 
 Per-module dependency table
 
@@ -101,7 +101,7 @@ Per-module dependency table
 | xuanjing-shader | platform | none | runtime final output, genframe post-process |
 | xuanjing-genframe | temporal, tensor | shader | runtime frame interpolation path |
 | xuanjing-eval | none | runtime output hooks | runtime, train, CI reports |
-| xuanjing-train | none | tensor, eval | tensor model package consumers |
+| xuanjing-model | none | tensor, eval | tensor model package consumers |
 
 Dependency management rules
 1. No circular hard dependencies are allowed.
@@ -131,7 +131,7 @@ Topological waves
 - xuanjing-genframe
 
 5. Wave 4 (model lifecycle)
-- xuanjing-train
+- xuanjing-model
 
 Week-by-week schedule
 
@@ -352,7 +352,7 @@ Acceptance criteria
 3. Evaluation report schema is stable and parseable by tools.
 4. Tests cover nominal metric computation, missing GT frame, and invalid resolution mismatch.
 
-## xuanjing-train
+## xuanjing-model
 
 Initial goals
 1. Implement dataset registration with validation and dedup behavior.

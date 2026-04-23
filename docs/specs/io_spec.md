@@ -38,7 +38,7 @@ Game Engine / Renderer
 | xuanjing-runtime | Engine API calls | Scheduled task queue dispatched to sub-modules |
 | xuanjing-platform | Driver/device query | Hardware capability descriptor (supported formats, MV precision, etc.) |
 | xuanjing-eval | Output frame + ground-truth reference frame | PSNR, SSIM, LPIPS, frame time, flicker rate |
-| xuanjing-train | Raw render sequences, GT high-res sequences | Trained model weight package |
+| xuanjing-model | Raw render sequences, GT high-res sequences | Trained model weight package |
 
 ## Required Engine-Side Inputs
 

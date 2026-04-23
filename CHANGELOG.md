@@ -36,7 +36,7 @@ and this project follows Semantic Versioning.
 
 #### Added
 - Initialized repository structure for the Xuanjing graphics upscaling and frame generation stack.
-- Added module directories: xuanjing-runtime, xuanjing-upscale, xuanjing-genframe, xuanjing-temporal, xuanjing-tensor, xuanjing-shader, xuanjing-eval, xuanjing-train, xuanjing-platform.
+- Added module directories: xuanjing-runtime, xuanjing-upscale, xuanjing-genframe, xuanjing-temporal, xuanjing-tensor, xuanjing-shader, xuanjing-eval, xuanjing-model, xuanjing-platform.
 - Added supporting directories: docs/architecture, docs/specs, samples, tools, tests/integration, tests/perf.
 - Added per-module minimal scaffolding (README.md, CMakeLists.txt, include header placeholder, src stub).
 - Added top-level CMake build system skeleton.

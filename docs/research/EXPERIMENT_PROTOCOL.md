@@ -68,7 +68,7 @@ Each paper must include ablation covering:
 2. Comparison to nearest open-source baseline at matched FLOPs budget
 3. Quality-latency Pareto curve across at least 3 operating points
 
-Ablation results must be reproducible from a single config file under `xuanjing-train/configs/ablations/`.
+Ablation results must be reproducible from a single config file under `xuanjing-model/configs/ablations/`.
 
 ---
 
@@ -82,7 +82,7 @@ Ablation results must be reproducible from a single config file under `xuanjing-
 
 ## 6. Experiment Tracking
 
-All training and evaluation runs are tracked with a structured log under `xuanjing-train/runs/`.
+All training and evaluation runs are tracked with a structured log under `xuanjing-model/runs/`.
 Required fields per run:
 ```
 run_id:       <uuid>
