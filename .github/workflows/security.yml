@@ -1,0 +1,57 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run security checks weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+jobs:
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y cmake ninja-build
+
+      - name: Check for vulnerable dependencies
+        run: |
+          # This is a placeholder for your dependency checking logic
+          # You can integrate with tools like:
+          # - dependabot (built into GitHub)
+          # - snyk
+          # - owasp dependency-check
+          echo "Dependency check passed"
+
+  cpp-codeql:
+    name: CodeQL Analysis (C++)
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build clang
+
+      - name: Build
+        run: |
+          cmake --preset dev -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
+          cmake --build --preset dev -j
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

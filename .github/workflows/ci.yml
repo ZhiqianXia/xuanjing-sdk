@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test:
@@ -13,24 +17,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        preset: [dev, asan]
+        preset: [dev, release, asan]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/apt
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
 
       - name: Install dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ninja-build clang clang-tidy clang-format lcov
 
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: build-${{ matrix.preset }}
+          key: ${{ runner.os }}-cmake-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-${{ matrix.preset }}-
+
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }}
+        run: cmake --preset ${{ matrix.preset }} -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
 
       - name: Build
-        run: cmake --build --preset ${{ matrix.preset }} -j
+        run: cmake --build --preset ${{ matrix.preset }} -j$(nproc)
 
       - name: Test
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --timeout 60
 
   lint:
     name: Lint (clang-format + clang-tidy)
@@ -44,7 +64,7 @@ jobs:
           sudo apt-get install -y ninja-build clang clang-tidy clang-format
 
       - name: Configure (for compile_commands.json)
-        run: cmake --preset dev
+        run: cmake --preset dev -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
 
       - name: Run lint
         run: bash tools/lint.sh
@@ -67,7 +87,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: build/coverage/coverage-report/
+          path: build-coverage/coverage-report/
+          retention-days: 30
+
+      - name: Comment Coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage_file = './build-coverage/coverage-report/index.html';
+            if (fs.existsSync(coverage_file)) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '📊 Coverage report generated! View it in the artifacts.'
+              });
+            }
 
   changelog-check:
     name: Changelog Updated
@@ -77,7 +114,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Check CHANGELOG.md was modified
         run: |
           git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q CHANGELOG.md || \
           (echo "ERROR: CHANGELOG.md was not updated in this PR." && exit 1)
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-24.04
+    needs: [build-and-test, lint, coverage, changelog-check]
+    if: always()
+    steps:
+      - name: CI Status Check
+        run: |
+          if [[ "${{ needs.build-and-test.result }}" == "failure" || \
+                "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.coverage.result }}" == "failure" ]]; then
+            echo "❌ CI Pipeline Failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"

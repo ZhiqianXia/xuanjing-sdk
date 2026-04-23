@@ -1,0 +1,41 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build clang
+
+      - name: Configure Release Build
+        run: cmake --preset release -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
+
+      - name: Build Release
+        run: cmake --build --preset release -j$(nproc)
+
+      - name: Run samples (performance check)
+        if: hashFiles('samples') != ''
+        run: |
+          # Run your sample/benchmark applications here
+          # Example: ./build-release/samples/my_benchmark
+          echo "Benchmark step - customize with your actual benchmarks"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: build-release/
+          retention-days: 7
